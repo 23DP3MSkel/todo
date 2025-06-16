@@ -1,65 +1,108 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Check if user is already logged in
+
   const token = localStorage.getItem('token');
   if (token) {
     showAppContent();
     loadTasks();
   } else {
-    // Show auth forms if not logged in
+
     document.getElementById('authForms').style.display = 'block';
   }
 });
 
-// ============= NEW AUTHENTICATION FUNCTIONS =============
+
+
+
 async function login() {
-  const username = document.getElementById('loginUsername').value;
-  const password = document.getElementById('loginPassword').value;
+  const username = document.getElementById('loginUsername'); 
+  const password = document.getElementById('loginPassword'); 
+  
+  username.classList.remove('input-error');
+  password.classList.remove('input-error');
+  
+  
+
+
+  if (!username.value) {
+    username.classList.add('input-error');
+    return;
+  }
+  if (!password.value) {
+    password.classList.add('input-error');
+    return;
+  }
 
   try {
     const response = await fetch('/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ 
+        username: username.value,
+        password: password.value
+      }),
     });
 
     const data = await response.json();
-    
+
     if (response.ok) {
       localStorage.setItem('token', data.token);
       showAppContent();
       loadTasks();
     } else {
-      alert(data.message || 'Login failed');
+      username.classList.add('input-error');
+      password.classList.add('input-error');
     }
   } catch (err) {
     console.error('Login error:', err);
-    alert('Login error');
+    username.classList.add('input-error');
+    password.classList.add('input-error');
   }
 }
 
 async function signup() {
-  const username = document.getElementById('signupUsername').value;
-  const password = document.getElementById('signupPassword').value;
+  const username = document.getElementById('signupUsername'); 
+  const password = document.getElementById('signupPassword');
+
+  if (!username || !password) {
+    console.error("Error: Couldn't find username/password fields!");
+    return;
+  }
+
+  
+  if (!username.value) {
+    username.classList.add('input-error');
+    return;
+  }
+  
+  if (!password.value || password.value.length < 8) {
+    password.classList.add('input-error');
+    return;
+  }
 
   try {
     const response = await fetch('/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ 
+        username: username.value, 
+        password: password.value   
+      }),
     });
 
     const data = await response.json();
-    
+
     if (response.ok) {
       localStorage.setItem('token', data.token);
       showAppContent();
       loadTasks();
     } else {
-      alert(data.message || 'Signup failed');
+      username.classList.add('input-error');
+      password.classList.add('input-error');
     }
   } catch (err) {
     console.error('Signup error:', err);
-    alert('Signup error');
+    username.classList.add('input-error');
+    password.classList.add('input-error');
   }
 }
 
@@ -75,7 +118,8 @@ function showAppContent() {
   document.getElementById('appContent').style.display = 'block';
 }
 
-// ============= YOUR ORIGINAL FUNCTIONS (MODIFIED TO INCLUDE TOKEN) =============
+
+
 async function loadTasks() {
   try {
     const token = localStorage.getItem('token');
@@ -112,10 +156,7 @@ function displayTasks(tasks) {
       ${task.description ? `<p>${task.description}</p>` : ''}
       <div class="task-actions">
         <button class="complete-btn" onclick="toggleTaskStatus('${task._id}', '${task.status}')">
-          ${task.status === 'completed' ? 'Undo' : 'Complete'}
-        </button>
-        <button class="edit-btn" onclick="editTaskPrompt('${task._id}', '${task.title}', '${task.description}', '${task.status}')">
-          Edit
+          ${task.status === 'completed' ? 'Finished' : 'Did it'}
         </button>
         <button class="delete-btn" onclick="deleteTask('${task._id}')">
           Delete
@@ -132,7 +173,7 @@ async function addTask() {
   const token = localStorage.getItem('token');
 
   if (!title) {
-    alert('Please enter a task title');
+    alert('Ieraksti taitlu');
     return;
   }
 
@@ -187,39 +228,39 @@ async function toggleTaskStatus(taskId, currentStatus) {
   }
 }
 
-async function editTaskPrompt(taskId, currentTitle, currentDesc, currentStatus) {
-  const newTitle = prompt('Edit task title:', currentTitle);
-  if (newTitle === null) return;
+// async function editTaskPrompt(taskId, currentTitle, currentDesc, currentStatus) {
+//   const newTitle = prompt('Edit task title:', currentTitle);
+//   if (newTitle === null) return;
 
-  const newDesc = prompt('Edit task description:', currentDesc);
-  const token = localStorage.getItem('token');
+//   const newDesc = prompt('Edit task description:', currentDesc);
+//   const token = localStorage.getItem('token');
   
-  try {
-    const response = await fetch(`/tasks/${taskId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        title: newTitle,
-        description: newDesc,
-        status: currentStatus
-      }),
-    });
+//   try {
+//     const response = await fetch(`/tasks/${taskId}`, {
+//       method: 'PUT',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'Authorization': `Bearer ${token}`
+//       },
+//       body: JSON.stringify({
+//         title: newTitle,
+//         description: newDesc,
+//         status: currentStatus
+//       }),
+//     });
 
-    if (response.ok) {
-      loadTasks();
-    } else if (response.status === 401) {
-      logout();
-    }
-  } catch (err) {
-    console.error('Error editing task:', err);
-  }
-}
+//     if (response.ok) {
+//       loadTasks();
+//     } else if (response.status === 401) {
+//       logout();
+//     }
+//   } catch (err) {
+//     console.error('Error editing task:', err);
+//   }
+// }
 
 async function deleteTask(taskId) {
-  if (!confirm('Are you sure you want to delete this task?')) return;
+ 
   const token = localStorage.getItem('token');
 
   try {
@@ -237,3 +278,14 @@ async function deleteTask(taskId) {
     console.error('Error deleting task:', err);
   }
 }
+
+
+
+
+
+
+
+
+        // <button class="edit-btn" onclick="editTaskPrompt('${task._id}', '${task.title}', '${task.description}', '${task.status}')">
+        //   Edit
+        // </button>

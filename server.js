@@ -19,10 +19,9 @@ mongoose.connect("mongodb+srv://Mark:something@cluster0.x4o7c.mongodb.net/?retry
 const Task = require('./models/Task');
 const User = require('./models/Users');
 
-// JWT Secret Key (in production, store this in environment variables)
+
 const JWT_SECRET = 'your_secret_key_here';
 
-// Middleware to verify JWT
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -155,3 +154,5 @@ app.delete('/tasks/:id', authenticateToken, async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
