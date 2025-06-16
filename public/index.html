@@ -7,19 +7,44 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-  
   <div class="container">
     <h1>My To-Do List</h1>
-    
-    <div class="task-form">
-      <input type="text" id="taskTitle" placeholder="Task title" required>
-      <input type="text" id="taskDesc" placeholder="Description (optional)">
-      <button onclick="addTask()">Add Task</button>
+  
+
+
+    <div id="authForms">
+      <div class="auth-form">
+        <h2>Login</h2>
+        <input type="text" id="loginUsername" placeholder="Username">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button onclick="login()">Login</button>
+      </div>
+      
+      <div class="auth-form">
+        <h2>Sign Up</h2>
+        <input type="text" id="signupUsername" placeholder="Username">
+        <input type="password" id="signupPassword" placeholder="Password">
+        <button onclick="signup()">Sign Up</button>
+      </div>
     </div>
     
-    <div class="task-list" id="taskList">
     
+
+
+    
+    <div id="appContent" style="display: none;">
+      <div class="user-info">
+        Welcome, <span id="usernameDisplay"></span>!
+        <button onclick="logout()">Logout</button>
+      </div>
+      
+      <div class="task-form">
+        <input type="text" id="taskTitle" placeholder="Task title" required>
+        <input type="text" id="taskDesc" placeholder="Description (optional)">
+        <button onclick="addTask()">Add Task</button>
+      </div>
+      
+      <div class="task-list" id="taskList"></div>
     </div>
   </div>
 

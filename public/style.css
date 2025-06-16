@@ -21,6 +21,7 @@ h1 {
 
 .task-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 20px;
 }
@@ -49,6 +50,8 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex-wrap: wrap;
+
 }
 
 .task {
@@ -97,4 +100,74 @@ h1 {
 .edit-btn {
   background-color: #2196F3;
   color: white;
+}
+
+
+
+.auth-form {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.auth-form h2 {
+  margin-top: 0;
+}
+
+.auth-form input {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.auth-form button {
+  width: 100%;
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.user-info {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-info button {
+  padding: 5px 10px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+
+#appContent{
+  display: flex;
+}
+
+.task-actions{
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Add this at the bottom of your style.css */
+.input-error {
+  border: 2px solid red !important;
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
 }

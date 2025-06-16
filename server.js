@@ -1,38 +1,107 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-
 app.use(bodyParser.json());
+app.use(cors());
 app.use(express.static('public'));
 
 mongoose.connect("mongodb+srv://Mark:something@cluster0.x4o7c.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Connection error:', err));
 
-
 const Task = require('./models/Task');
+const User = require('./models/Users');
 
+// JWT Secret Key (in production, store this in environment variables)
+const JWT_SECRET = 'your_secret_key_here';
 
-app.get('/tasks', async (req, res) => {
+// Middleware to verify JWT
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) return res.sendStatus(401);
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+};
+
+// Signup route
+app.post('/signup', async (req, res) => {
   try {
-    const tasks = await Task.find().sort({ createdAt: -1 });
+    const { username, password } = req.body;
+    
+    // Check if user exists
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+    
+    // Create new user
+    const user = new User({ username, password });
+    await user.save();
+    
+    // Create token
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+    
+    res.status(201).json({ token });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Login route
+app.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    
+    // Find user
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    
+    // Check password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    
+    // Create token
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+    
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// All task routes now require authentication
+app.get('/tasks', authenticateToken, async (req, res) => {
+  try {
+    const tasks = await Task.find({ userId: req.user.userId }).sort({ createdAt: -1 });
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-
-app.post('/tasks', async (req, res) => {
+app.post('/tasks', authenticateToken, async (req, res) => {
   const task = new Task({
     title: req.body.title,
     description: req.body.description,
-    status: req.body.status || 'not completed'
+    status: req.body.status || 'not completed',
+    userId: req.user.userId
   });
 
   try {
@@ -43,13 +112,10 @@ app.post('/tasks', async (req, res) => {
   }
 });
 
-
-
-
-app.put('/tasks/:id', async (req, res) => {
+app.put('/tasks/:id', authenticateToken, async (req, res) => {
   try {
-    const updatedTask = await Task.findByIdAndUpdate(
-      req.params.id,
+    const updatedTask = await Task.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.userId },
       {
         title: req.body.title,
         description: req.body.description,
@@ -58,27 +124,33 @@ app.put('/tasks/:id', async (req, res) => {
       },
       { new: true }
     );
+    
+    if (!updatedTask) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+    
     res.json(updatedTask);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-
-
-
-app.delete('/tasks/:id', async (req, res) => {
+app.delete('/tasks/:id', authenticateToken, async (req, res) => {
   try {
-    await Task.findByIdAndDelete(req.params.id);
+    const deletedTask = await Task.findOneAndDelete({ 
+      _id: req.params.id, 
+      userId: req.user.userId 
+    });
+    
+    if (!deletedTask) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+    
     res.json({ message: 'Task deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
-
-
-
-
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

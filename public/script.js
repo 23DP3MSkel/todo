@@ -1,9 +1,98 @@
+document.addEventListener('DOMContentLoaded', () => {
+  // Check if user is already logged in
+  const token = localStorage.getItem('token');
+  if (token) {
+    showAppContent();
+    loadTasks();
+  } else {
+    // Show auth forms if not logged in
+    document.getElementById('authForms').style.display = 'block';
+  }
+});
 
-document.addEventListener('DOMContentLoaded', loadTasks);
+// ============= NEW AUTHENTICATION FUNCTIONS =============
+async function login() {
+  const username = document.getElementById('loginUsername').value;
+  const password = document.getElementById('loginPassword').value;
 
+  try {
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
+    
+    if (response.ok) {
+      localStorage.setItem('token', data.token);
+      showAppContent();
+      loadTasks();
+    } else {
+      alert(data.message || 'Login failed');
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    alert('Login error');
+  }
+}
+
+async function signup() {
+  const username = document.getElementById('signupUsername').value;
+  const password = document.getElementById('signupPassword').value;
+
+  try {
+    const response = await fetch('/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
+    
+    if (response.ok) {
+      localStorage.setItem('token', data.token);
+      showAppContent();
+      loadTasks();
+    } else {
+      alert(data.message || 'Signup failed');
+    }
+  } catch (err) {
+    console.error('Signup error:', err);
+    alert('Signup error');
+  }
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  document.getElementById('appContent').style.display = 'none';
+  document.getElementById('authForms').style.display = 'block';
+  document.getElementById('taskList').innerHTML = '';
+}
+
+function showAppContent() {
+  document.getElementById('authForms').style.display = 'none';
+  document.getElementById('appContent').style.display = 'block';
+}
+
+// ============= YOUR ORIGINAL FUNCTIONS (MODIFIED TO INCLUDE TOKEN) =============
 async function loadTasks() {
   try {
-    const response = await fetch('/tasks');
+    const token = localStorage.getItem('token');
+    if (!token) {
+      logout();
+      return;
+    }
+
+    const response = await fetch('/tasks', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+    
     const tasks = await response.json();
     displayTasks(tasks);
   } catch (err) {
@@ -40,6 +129,7 @@ function displayTasks(tasks) {
 async function addTask() {
   const title = document.getElementById('taskTitle').value;
   const description = document.getElementById('taskDesc').value;
+  const token = localStorage.getItem('token');
 
   if (!title) {
     alert('Please enter a task title');
@@ -51,6 +141,7 @@ async function addTask() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         title,
@@ -63,6 +154,8 @@ async function addTask() {
       document.getElementById('taskTitle').value = '';
       document.getElementById('taskDesc').value = '';
       loadTasks();
+    } else if (response.status === 401) {
+      logout();
     }
   } catch (err) {
     console.error('Error adding task:', err);
@@ -70,11 +163,14 @@ async function addTask() {
 }
 
 async function toggleTaskStatus(taskId, currentStatus) {
+  const token = localStorage.getItem('token');
+  
   try {
     const response = await fetch(`/tasks/${taskId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         status: currentStatus === 'completed' ? 'not completed' : 'completed'
@@ -83,6 +179,8 @@ async function toggleTaskStatus(taskId, currentStatus) {
 
     if (response.ok) {
       loadTasks();
+    } else if (response.status === 401) {
+      logout();
     }
   } catch (err) {
     console.error('Error toggling task status:', err);
@@ -91,15 +189,17 @@ async function toggleTaskStatus(taskId, currentStatus) {
 
 async function editTaskPrompt(taskId, currentTitle, currentDesc, currentStatus) {
   const newTitle = prompt('Edit task title:', currentTitle);
-  if (newTitle === null) return; // User cancelled
+  if (newTitle === null) return;
 
   const newDesc = prompt('Edit task description:', currentDesc);
+  const token = localStorage.getItem('token');
   
   try {
     const response = await fetch(`/tasks/${taskId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         title: newTitle,
@@ -110,6 +210,8 @@ async function editTaskPrompt(taskId, currentTitle, currentDesc, currentStatus) 
 
     if (response.ok) {
       loadTasks();
+    } else if (response.status === 401) {
+      logout();
     }
   } catch (err) {
     console.error('Error editing task:', err);
@@ -118,25 +220,20 @@ async function editTaskPrompt(taskId, currentTitle, currentDesc, currentStatus) 
 
 async function deleteTask(taskId) {
   if (!confirm('Are you sure you want to delete this task?')) return;
+  const token = localStorage.getItem('token');
 
   try {
     const response = await fetch(`/tasks/${taskId}`, {
       method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
     });
 
     if (response.ok) {
       loadTasks();
+    } else if (response.status === 401) {
+      logout();
     }
   } catch (err) {
     console.error('Error deleting task:', err);
   }
 }
-
-// Store token after login/signup
-localStorage.setItem('token', response.token);
-
-// Add to all fetch requests
-const token = localStorage.getItem('token');
-fetch('/tasks', {
-  headers: { 'Authorization': `Bearer ${token}` }
-});
