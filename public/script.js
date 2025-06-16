@@ -14,21 +14,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 async function login() {
-  const username = document.getElementById('loginUsername'); 
-  const password = document.getElementById('loginPassword'); 
+  const username = document.getElementById('loginUsername');
+  const password = document.getElementById('loginPassword');
   
+
+  const resetShake = (element) => {
+    element.classList.remove('input-error');
+    void element.offsetWidth; 
+    element.classList.add('input-error');
+  };
+
   username.classList.remove('input-error');
   password.classList.remove('input-error');
-  
-  
 
-
+  // Validate username
   if (!username.value) {
-    username.classList.add('input-error');
+    resetShake(username);
     return;
   }
+
+
+  
   if (!password.value) {
-    password.classList.add('input-error');
+    resetShake(password);
     return;
   }
 
@@ -38,44 +46,56 @@ async function login() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         username: username.value,
-        password: password.value
+        password: password.value 
       }),
     });
 
-    const data = await response.json();
-
     if (response.ok) {
+      const data = await response.json();
       localStorage.setItem('token', data.token);
       showAppContent();
       loadTasks();
     } else {
-      username.classList.add('input-error');
-      password.classList.add('input-error');
+      resetShake(username);
+      resetShake(password);
     }
   } catch (err) {
     console.error('Login error:', err);
-    username.classList.add('input-error');
-    password.classList.add('input-error');
+    resetShake(username);
+    resetShake(password);
   }
 }
 
 async function signup() {
-  const username = document.getElementById('signupUsername'); 
+  const username = document.getElementById('signupUsername');
   const password = document.getElementById('signupPassword');
+
+  
+  const resetShake = (element) => {
+    element.classList.remove('input-error');
+    void element.offsetWidth; 
+    element.classList.add('input-error');
+  };
+
+  
+  username.classList.remove('input-error');
+  password.classList.remove('input-error');
+
 
   if (!username || !password) {
     console.error("Error: Couldn't find username/password fields!");
     return;
   }
 
-  
+ 
   if (!username.value) {
-    username.classList.add('input-error');
+    resetShake(username);
     return;
   }
+
   
   if (!password.value || password.value.length < 8) {
-    password.classList.add('input-error');
+    resetShake(password);
     return;
   }
 
@@ -84,25 +104,24 @@ async function signup() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        username: username.value, 
-        password: password.value   
+        username: username.value,
+        password: password.value
       }),
     });
 
-    const data = await response.json();
-
     if (response.ok) {
+      const data = await response.json();
       localStorage.setItem('token', data.token);
       showAppContent();
       loadTasks();
     } else {
-      username.classList.add('input-error');
-      password.classList.add('input-error');
+      resetShake(username);
+      resetShake(password);
     }
   } catch (err) {
     console.error('Signup error:', err);
-    username.classList.add('input-error');
-    password.classList.add('input-error');
+    resetShake(username);
+    resetShake(password);
   }
 }
 

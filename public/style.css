@@ -160,7 +160,6 @@ h1 {
   flex-wrap: wrap;
 }
 
-/* Add this at the bottom of your style.css */
 .input-error {
   border: 2px solid red !important;
   animation: shake 0.5s;
@@ -171,3 +170,4 @@ h1 {
   20%, 60% { transform: translateX(-5px); }
   40%, 80% { transform: translateX(5px); }
 }
+
